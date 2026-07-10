@@ -230,13 +230,13 @@
   .sw-btn.gho2:hover{color:#fff;border-color:#3a434b}
   .sw-btn.pri.full{flex:1}
 
-  /* API-ready developer note */
-  .sw-apinote{margin-top:22px;border:1px dashed #3a434b;border-radius:8px;background:#0a0c0e;overflow:hidden;text-align:left}
-  .sw-apihead{font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.14em;color:#f5b301;padding:10px 16px;border-bottom:1px dashed #23282d;background:#101316}
-  .sw-apinote pre{font-family:'JetBrains Mono',monospace;font-size:.74rem;line-height:1.65;color:#a7b2ba;padding:16px;overflow-x:auto;white-space:pre}
-  .sw-apinote pre .k{color:#f5b301}
-  .sw-apinote pre .c{color:#5c6771}
-  .sw-apinote .exp{font-size:.82rem;color:#9aa4ac;font-weight:300;line-height:1.6;padding:0 16px 16px}
+  /* contact step + form status */
+  .sw-field textarea{width:100%;background:#131619;border:1px solid #2b333a;border-radius:8px;padding:12px 14px;color:#e9edf0;font-family:'JetBrains Mono',monospace;font-size:.9rem;resize:vertical;min-height:76px}
+  .sw-field textarea:focus{outline:none;border-color:#f5b301}
+  .sw-hp{position:absolute!important;left:-9999px!important;width:1px;height:1px;overflow:hidden}
+  .sw-err{display:none;margin:0 24px 4px;padding:11px 14px;border:1px solid #5b2626;background:#241012;color:#ff9b9b;border-radius:8px;font-size:.86rem;line-height:1.5}
+  .sw-err.show{display:block}
+  .sw-btn[disabled]{opacity:.6;cursor:not-allowed}
 
   /* about split */
   .sw-split{display:grid;grid-template-columns:1.1fr .9fr;gap:44px;align-items:center}
@@ -396,7 +396,6 @@
         <div class="sw-qhead">
           <span class="tt">Work Order</span>
           <span class="tk">#WX-2026-0417</span>
-          <span class="demo">DEMO</span>
           <span class="sw-prog" aria-hidden="true"><i class="on" data-p="0"></i><i data-p="1"></i><i data-p="2"></i><i data-p="3"></i><i data-p="4"></i></span>
         </div>
         <div class="sw-qbody">
@@ -414,9 +413,10 @@
           <!-- step 1 -->
           <div class="sw-step" data-step="1">
             <div class="sw-q">Your vehicle</div>
-            <div class="sw-field"><label>Make &amp; model</label><input id="swVeh" value="2016 Toyota Aqua"></div>
-            <div class="sw-field"><label>Rego</label><input id="swReg" value="KWX419"></div>
-            <div class="sw-note">Demo details are pre-filled so you can see the whole flow.</div>
+            <div class="sw-field"><label for="swMake">Make *</label><input id="swMake" autocomplete="off" placeholder="e.g. Toyota"></div>
+            <div class="sw-field"><label for="swModel">Model *</label><input id="swModel" autocomplete="off" placeholder="e.g. Aqua"></div>
+            <div class="sw-field"><label for="swYear">Year</label><input id="swYear" inputmode="numeric" autocomplete="off" placeholder="e.g. 2016"></div>
+            <div class="sw-field"><label for="swReg">Registration</label><input id="swReg" autocomplete="off" placeholder="e.g. KWX419"></div>
           </div>
           <!-- step 2 -->
           <div class="sw-step" data-step="2">
@@ -433,31 +433,28 @@
             <div class="sw-est" id="swEst"></div>
             <div class="sw-note">Indicative estimate only — your final price is confirmed after we inspect the vehicle, and we always call before any extra work. Prices incl. GST.</div>
           </div>
-          <!-- step 4 -->
+          <!-- step 4 · contact details -->
           <div class="sw-step" data-step="4">
+            <div class="sw-q">Your details</div>
+            <div class="sw-field"><label for="swName">Name *</label><input id="swName" autocomplete="name" placeholder="Your name"></div>
+            <div class="sw-field"><label for="swPhone">Phone *</label><input id="swPhone" type="tel" autocomplete="tel" placeholder="e.g. 021 234 5678"></div>
+            <div class="sw-field"><label for="swEmail">Email *</label><input id="swEmail" type="email" autocomplete="email" placeholder="you@example.com"></div>
+            <div class="sw-field"><label for="swNotes">Notes (optional)</label><textarea id="swNotes" rows="3" placeholder="Anything we should know?"></textarea></div>
+            <div class="sw-hp"><label>Company website<input id="swHp" name="company_website" tabindex="-1" autocomplete="off"></label></div>
+            <div class="sw-note">This is a booking <b>request</b> — we'll contact you to confirm availability and the final price after a quick inspection.</div>
+          </div>
+          <!-- step 5 · success -->
+          <div class="sw-step" data-step="5">
             <div class="sw-conf">
               <div class="ck">✓</div>
-              <div class="sw-q" style="margin-bottom:8px">Booking request sent.</div>
-              <p style="font-weight:300;color:#c3cad0;max-width:40ch;margin:0 auto">2016 Toyota Aqua · Fri 11 Jul · <span id="swConfTot">$220</span> indicative estimate. We'll confirm your booking and final price after a quick inspection.</p>
-            </div>
-            <div class="sw-apinote">
-              <div class="sw-apihead">◇ DEVELOPER NOTE — FRONT-END DEMO, NOT YET CONNECTED</div>
-              <pre><span class="c">// This booking flow is a fully working front end.</span>
-<span class="c">// Nothing is sent yet — no data leaves this page.</span>
-
-<span class="k">POST</span> https://api.swanson-worx.staging.maximisedai.com/v1/bookings
-{
-  <span class="k">"services"</span>: ["WOF","Basic service"],
-  <span class="k">"vehicle"</span> : "2016 Toyota Aqua",
-  <span class="k">"slot"</span>    : "2026-07-11T09:00+12:00",
-  <span class="k">"estimate"</span>: 220.00,
-  <span class="k">"contact"</span> : "+64 …"
-}
-<span class="c">→ 201 Created · SMS confirmation + calendar hold</span></pre>
-              <p class="exp">Going live is just a matter of wiring this final step to a booking / SMS API — Twilio for the text, a Google Calendar hold for the slot, or your existing CRM. The interface is finished; only the connection remains.</p>
+              <div class="sw-q" style="margin-bottom:8px">Booking request received</div>
+              <p style="font-weight:300;color:#c3cad0;max-width:42ch;margin:0 auto 10px">Your reference is <b id="swRef" style="color:#f5b301">—</b>.</p>
+              <p id="swConfSummary" style="font-weight:300;color:#8b949c;max-width:42ch;margin:0 auto 10px;font-size:.9rem"></p>
+              <p style="font-weight:300;color:#c3cad0;max-width:42ch;margin:0 auto">Swanson Worx will confirm availability with you directly. Nothing is booked until we're in touch.</p>
             </div>
           </div>
         </div>
+        <div class="sw-err" id="swErr" role="alert" aria-live="polite"></div>
         <div class="sw-qfoot">
           <button class="sw-btn gho2" id="swBack" onclick="swPrev()" style="display:none">Back</button>
           <button class="sw-btn pri full" id="swNext" onclick="swNext()">Next →</button>
@@ -626,10 +623,18 @@
 </footer>
 
 <script>
-/* ---------- speed-to-quote wizard (standalone) ---------- */
+/* API base is configurable — set window.SwansonWorxConfig before this script to change environments. */
+window.SwansonWorxConfig = window.SwansonWorxConfig || { apiBase: 'https://api.swanson-worx.staging.maximisedai.com' };
+</script>
+<script>
+/* ---------- estimate → booking-request wizard (standalone) ---------- */
 (function(){
-  var step=0, maxStep=4;
+  var step=0, maxStep=5, submitting=false, submitted=false;
+  var idemKey=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():(String(Date.now())+Math.random().toString(16).slice(2));
   var svcWrap=document.getElementById('swServices');
+  var errEl=document.getElementById('swErr');
+  var nb=document.getElementById('swNext'), bb=document.getElementById('swBack');
+
   svcWrap.querySelectorAll('.sw-opt').forEach(function(o){
     o.addEventListener('click',function(){
       o.classList.toggle('sel');
@@ -641,7 +646,17 @@
       o.classList.remove('sel');o.querySelector('.bx').textContent='';});
     el.classList.add('sel');el.querySelector('.bx').textContent='✓';
   };
-  function money(n){return '$'+n.toFixed(2);}
+
+  function val(id){var el=document.getElementById(id);return el?String(el.value||'').trim():'';}
+  function money(n){return '$'+Number(n).toFixed(2);}
+  function selectedServices(){return Array.prototype.map.call(svcWrap.querySelectorAll('.sw-opt.sel'),function(o){return o.querySelector('.ol').textContent.trim();});}
+  function selectedSlot(){var el=document.querySelector('.sw-step[data-step="2"] .sw-opt.sel .ol');return el?el.textContent.trim():'';}
+  function estimateTotal(){var t=0,any=false;svcWrap.querySelectorAll('.sw-opt.sel').forEach(function(o){any=true;t+=parseFloat(o.getAttribute('data-price'))||0;});return any?t:95;}
+  function vehicleStr(){return [val('swYear'),val('swMake'),val('swModel')].filter(Boolean).join(' ');}
+  function validEmail(e){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);}
+  function showErr(msg){if(errEl){errEl.textContent=msg;errEl.classList.add('show');}}
+  function clearErr(){if(errEl){errEl.textContent='';errEl.classList.remove('show');}}
+
   function buildEstimate(){
     var box=document.getElementById('swEst');box.innerHTML='';
     var total=0,any=false;
@@ -651,30 +666,98 @@
       var price=parseFloat(o.getAttribute('data-price'))||0;
       total+=price;
       var row=document.createElement('div');row.className='er';
-      row.innerHTML='<span>'+name+'</span><span class="v">'+(price?money(price):'incl.')+'</span>';
-      box.appendChild(row);
+      var a=document.createElement('span'), b=document.createElement('span'); b.className='v';
+      a.textContent=name; b.textContent=price?money(price):'incl.';
+      row.appendChild(a);row.appendChild(b);box.appendChild(row);
     });
-    if(!any){var r=document.createElement('div');r.className='er';r.innerHTML='<span>Workshop assessment</span><span class="v">$95.00</span>';box.appendChild(r);total=95;}
-    var veh=document.getElementById('swVeh').value||'Your vehicle';
+    if(!any){var r=document.createElement('div');r.className='er';var ra=document.createElement('span');ra.textContent='Workshop assessment';var rb=document.createElement('span');rb.className='v';rb.textContent='$95.00';r.appendChild(ra);r.appendChild(rb);box.appendChild(r);total=95;}
     var vr=document.createElement('div');vr.className='er';
-    vr.innerHTML='<span style="color:#8b949c">Vehicle</span><span class="v">'+veh+'</span>';
-    box.appendChild(vr);
+    var va=document.createElement('span');va.style.color='#8b949c';va.textContent='Vehicle';
+    var vb=document.createElement('span');vb.className='v';vb.textContent=vehicleStr()||'Your vehicle';
+    vr.appendChild(va);vr.appendChild(vb);box.appendChild(vr);
     var tr=document.createElement('div');tr.className='tot';
-    tr.innerHTML='<span>Estimate total</span><span class="v">'+money(total)+'</span>';
-    box.appendChild(tr);
-    document.getElementById('swConfTot').textContent=money(total);
+    var ta=document.createElement('span');ta.textContent='Estimate total';
+    var tb=document.createElement('span');tb.className='v';tb.textContent=money(total);
+    tr.appendChild(ta);tr.appendChild(tb);box.appendChild(tr);
   }
-  var labels={0:'Next →',1:'Choose a time →',2:'See my price →',3:'Request booking →'};
+
+  var labels={0:'Next →',1:'Choose a time →',2:'See my price →',3:'Add your details →',4:'Request booking →'};
+
   function render(){
     document.querySelectorAll('.sw-step').forEach(function(s){s.classList.toggle('on',+s.getAttribute('data-step')===step);});
     document.querySelectorAll('.sw-prog i').forEach(function(i){i.classList.toggle('on',+i.getAttribute('data-p')<=step);});
-    var bb=document.getElementById('swBack'),nb=document.getElementById('swNext');
     if(step===3){buildEstimate();}
-    if(step===4){nb.style.display='none';bb.style.display='';bb.textContent='Start over';}
-    else{nb.style.display='';nb.textContent=labels[step];bb.textContent='Back';bb.style.display=step===0?'none':'';}
+    if(step===5){nb.style.display='none';bb.style.display='none';}
+    else{nb.style.display='';nb.disabled=submitting;nb.textContent=submitting?'Sending…':labels[step];bb.textContent='Back';bb.style.display=(step===0?'none':'');}
   }
-  window.swNext=function(){if(step<maxStep){step++;render();}};
-  window.swPrev=function(){if(step===maxStep){step=0;document.getElementById('swNext').style.display='';render();return;}if(step>0){step--;render();}};
+
+  function advanceGuard(){
+    clearErr();
+    if(step===0 && selectedServices().length===0){showErr('Please select at least one service.');return false;}
+    if(step===1 && (!val('swMake')||!val('swModel'))){showErr('Please enter your vehicle make and model.');return false;}
+    if(step===2 && !selectedSlot()){showErr('Please choose a preferred day.');return false;}
+    return true;
+  }
+
+  function submitBooking(){
+    if(submitting||submitted)return;
+    clearErr();
+    if(selectedServices().length===0){showErr('Please select at least one service.');return;}
+    if(!val('swMake')||!val('swModel')){showErr('Please enter your vehicle make and model.');return;}
+    if(!selectedSlot()){showErr('Please choose a preferred day.');return;}
+    if(!val('swName')){showErr('Please enter your name.');var n=document.getElementById('swName');if(n)n.focus();return;}
+    if(!val('swPhone')){showErr('Please enter a phone number.');var p=document.getElementById('swPhone');if(p)p.focus();return;}
+    if(!val('swEmail')||!validEmail(val('swEmail'))){showErr('Please enter a valid email address.');var em=document.getElementById('swEmail');if(em)em.focus();return;}
+
+    var payload={
+      customer_name:val('swName'), customer_phone:val('swPhone'), customer_email:val('swEmail'),
+      customer_notes:val('swNotes'),
+      services:selectedServices(),
+      vehicle_year:val('swYear'), vehicle_make:val('swMake'), vehicle_model:val('swModel'),
+      vehicle_registration:val('swReg'),
+      preferred_slot:selectedSlot(),
+      indicative_estimate:estimateTotal(),
+      source:'swanson-worx-staging',
+      company_website:val('swHp')
+    };
+    var cfg=window.SwansonWorxConfig||{}; var base=(cfg.apiBase||'').replace(/\/+$/,'');
+    if(!base){showErr('Booking is not configured yet — please call 09-833 9988.');return;}
+
+    submitting=true; render();
+    fetch(base+'/v1/bookings',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Idempotency-Key':idemKey},
+      body:JSON.stringify(payload)
+    }).then(function(res){
+      return res.text().then(function(t){
+        var data={}; try{data=t?JSON.parse(t):{};}catch(e){}
+        if(!res.ok||data.ok===false){throw new Error((data&&data.error)||('Request failed ('+res.status+')'));}
+        return data;
+      });
+    }).then(function(data){
+      submitted=true; submitting=false;
+      var ref=(data&&data.booking_reference)||'';
+      var refEl=document.getElementById('swRef'); if(refEl)refEl.textContent=ref||'(pending)';
+      var sum=document.getElementById('swConfSummary');
+      if(sum)sum.textContent=[vehicleStr(),selectedSlot(),money(estimateTotal())+' indicative'].filter(Boolean).join(' · ');
+      step=5; render();
+    }).catch(function(err){
+      submitting=false; render();
+      showErr((err&&err.message)?err.message:'Sorry — something went wrong. Please call 09-833 9988.');
+    });
+  }
+
+  window.swNext=function(){
+    if(submitting||submitted)return;
+    if(step===4){submitBooking();return;}
+    if(!advanceGuard())return;
+    if(step<maxStep){step++;render();}
+  };
+  window.swPrev=function(){
+    if(submitting)return;
+    clearErr();
+    if(step>0 && step<5){step--;render();}
+  };
   render();
 })();
 </script>
