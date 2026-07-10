@@ -1,0 +1,23 @@
+{
+  // Cloudflare Worker for the Swanson Worx booking-request API.
+  // Secrets are NOT stored here — set them with `wrangler secret put` (see README).
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "swanson-worx-booking-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-11-01",
+  "observability": { "enabled": true },
+
+  // Serve the API on the staging hostname. Requires the maximisedai.com zone to be on
+  // Cloudflare; `wrangler deploy` then provisions the hostname + TLS automatically.
+  "routes": [
+    { "pattern": "api.swanson-worx.staging.maximisedai.com", "custom_domain": true }
+  ]
+
+  // Required secrets (set via `wrangler secret put <NAME>`):
+  //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, BOOKING_NOTIFICATION_EMAIL,
+  //   EMAIL_FROM, RESEND_API_KEY, ALLOWED_ORIGINS
+  //
+  // OPTIONAL — idempotency + per-IP rate limiting. Create a KV namespace
+  // (`wrangler kv namespace create BOOKINGS_KV`) and uncomment:
+  // "kv_namespaces": [{ "binding": "BOOKINGS_KV", "id": "<kv-namespace-id>" }]
+}
