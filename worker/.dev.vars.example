@@ -1,10 +1,12 @@
-# Copy to `.dev.vars` for local `wrangler dev`. NEVER commit the real .dev.vars.
-# In production these are set with `wrangler secret put <NAME>` (not in this file).
-
+# Copy to `.dev.vars` local `wrangler dev`. NEVER commit real .dev.vars.
+# In production set `wrangler secret put <NAME>` (not in file).
+MGRNZ_SMTP_HOST="smtp.zoho.com"
+MGRNZ_SMTP_PORT="465"
+MGRNZ_SMTP_USERNAME="booking@swanson-worx.staging.maximisedai.com"
+MGRNZ_SMTP_PASSWORD="<smtp-password>"
 SUPABASE_URL="https://<project-ref>.supabase.co"
 SUPABASE_SERVICE_ROLE_KEY="<service-role-key>"
 BOOKING_NOTIFICATION_EMAIL="mike@example.com"
 EMAIL_FROM="Swanson Worx <bookings@swanson-worx.staging.maximisedai.com>"
-RESEND_API_KEY="<resend-api-key>"
-# Comma-separated. Include the site origin + any local dev origins.
+# Comma-separated. Include site origin + local dev origins.
 ALLOWED_ORIGINS="https://swanson-worx.staging.maximisedai.com,http://localhost:8000,http://127.0.0.1:8000"

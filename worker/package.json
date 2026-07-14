@@ -2,7 +2,7 @@
   "name": "swanson-worx-booking-api",
   "version": "0.1.0",
   "private": true,
-  "description": "Cloudflare Worker: Swanson Worx estimate -> booking-request API (Supabase + Resend).",
+  "description": "Cloudflare Worker: Swanson Worx estimate -> booking-request API (Supabase + Zoho SMTP).",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",

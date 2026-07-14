@@ -1,17 +1,20 @@
 /**
  * Swanson Worx — booking-request API (Cloudflare Worker)
  *
- * Flow:  static site (GitHub Pages)  ->  this Worker (POST /v1/bookings)  ->  Supabase (service-role insert)  ->  Resend emails.
+ * Flow:  static site (GitHub Pages)  ->  this Worker (POST /v1/bookings)  ->  Supabase (service-role insert)  ->  SMTP emails.
  *
  * This records a booking REQUEST only. It never confirms a booking.
  * No Twilio / SMS / Google Calendar / CRM / authentication / confirmed-booking logic.
  */
+
+import { connect } from 'cloudflare:sockets';
 
 export interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
 
   BOOKING_NOTIFICATION_EMAIL: string;
+  EMAIL_FROM: string;
 
   MGRNZ_SMTP_HOST: string;
   MGRNZ_SMTP_PORT: string;
@@ -164,14 +167,10 @@ async function sendEmail(
     to,
     subject,
     html,
-    fromEmail: smtp.username,
+    fromEmail: env.EMAIL_FROM || smtp.username,
   });
 
-  await sendSmtpEmail(
-    smtp,
-    message,
-    to
-  );
+  await sendSmtpEmail(smtp, message, to);
 }
 function getSmtpConfig(env: Env) {
   const host = env.MGRNZ_SMTP_HOST;
@@ -189,6 +188,146 @@ function getSmtpConfig(env: Env) {
     username,
     password,
   };
+}
+
+function buildSmtpMessage(input: { to: string; subject: string; html: string; fromEmail: string }): string {
+  const fromHeader = input.fromEmail;
+  const toHeader = input.to;
+  const boundary = `----swanson-worx-${crypto.randomUUID()}`;
+  const text = input.html
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const headers = [
+    `From: ${fromHeader}`,
+    `To: ${toHeader}`,
+    `Subject: ${input.subject}`,
+    'MIME-Version: 1.0',
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+  ];
+
+  return [
+    ...headers,
+    '',
+    `--${boundary}`,
+    'Content-Type: text/plain; charset=UTF-8',
+    'Content-Transfer-Encoding: 8bit',
+    '',
+    text,
+    '',
+    `--${boundary}`,
+    'Content-Type: text/html; charset=UTF-8',
+    'Content-Transfer-Encoding: 8bit',
+    '',
+    input.html,
+    '',
+    `--${boundary}--`,
+    '',
+  ].join('\r\n');
+}
+
+async function sendSmtpEmail(
+  smtp: ReturnType<typeof getSmtpConfig>,
+  message: string,
+  recipient: string
+): Promise<void> {
+  const secureTransport: 'on' | 'starttls' = smtp.port === 465 ? 'on' : 'starttls';
+  const socket = connect(
+    { hostname: smtp.host, port: smtp.port },
+    { secureTransport, allowHalfOpen: false }
+  );
+  let currentSocket = socket;
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+  const writer = () => currentSocket.writable.getWriter();
+  let readLine = createSmtpReader(currentSocket);
+
+  const writeLine = async (line: string) => {
+    const w = writer();
+    await w.write(encoder.encode(`${line}\r\n`));
+    w.releaseLock();
+  };
+
+  const expect = async (codes: number[]) => {
+    const line = await readLine();
+    const code = Number(line.slice(0, 3));
+    if (!codes.includes(code)) throw new Error(`SMTP error: ${line}`);
+    return line;
+  };
+
+  const authLogin = async () => {
+    await writeLine(`AUTH LOGIN`);
+    await expect([334]);
+    await writeLine(btoa(smtp.username));
+    await expect([334]);
+    await writeLine(btoa(smtp.password));
+    await expect([235]);
+  };
+
+  try {
+    await expect([220]);
+    await writeLine(`EHLO swanson-worx.staging.maximisedai.com`);
+    await readSmtpGreet(readLine);
+
+    if (smtp.port === 587) {
+      await writeLine('STARTTLS');
+      await expect([220]);
+      currentSocket = currentSocket.startTls();
+      readLine = createSmtpReader(currentSocket);
+      await writeLine(`EHLO swanson-worx.staging.maximisedai.com`);
+      await readSmtpGreet(readLine);
+    }
+
+    await authLogin();
+    await writeLine(`MAIL FROM:<${smtp.username}>`);
+    await expect([250]);
+    await writeLine(`RCPT TO:<${recipient}>`);
+    await expect([250, 251]);
+    await writeLine(`DATA`);
+    await expect([354]);
+
+    const normalized = message.replace(/\r?\n/g, '\r\n').replace(/^\./gm, '..');
+    await writeLine(normalized);
+    await writeLine('.');
+    await expect([250]);
+    await writeLine('QUIT');
+  } finally {
+    await currentSocket.close().catch(() => {});
+  }
+}
+
+function createSmtpReader(socket: { readable: ReadableStream<Uint8Array> }) {
+  const reader = socket.readable.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  return async (): Promise<string> => {
+    while (!buffer.includes('\n')) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+    }
+    const lineEnd = buffer.indexOf('\n');
+    if (lineEnd === -1) {
+      const line = buffer.trim();
+      buffer = '';
+      return line;
+    }
+    const line = buffer.slice(0, lineEnd).replace(/\r$/, '');
+    buffer = buffer.slice(lineEnd + 1);
+    return line;
+  };
+}
+
+async function readSmtpGreet(readLine: () => Promise<string>): Promise<void> {
+  let line = await readLine();
+  while (line.length >= 4 && line[3] === '-') {
+    line = await readLine();
+  }
+  const code = Number(line.slice(0, 3));
+  if (code !== 250) throw new Error(`SMTP EHLO failed: ${line}`);
 }
 async function sendEmails(env: Env, reference: string, data: BookingInput): Promise<void> {
   const vehicle = [data.vehicle_year, data.vehicle_make, data.vehicle_model].filter(Boolean).join(' ');

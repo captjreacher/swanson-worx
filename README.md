@@ -33,15 +33,14 @@ Then open <http://localhost:8000/> — `index.html` is the root entry point. (Go
 
 Swanson Worx Limited · 720D Swanson Road, Swanson, Auckland 0612, New Zealand · 09-833 9988 · swansonworx@gmail.com
 
-
 ---
 
 ## Booking-request API (estimate → booking request)
 
-The estimate wizard's final step POSTs the collected details to a small **Cloudflare Worker**, which validates them, stores a **booking request** in **Supabase**, and sends notification emails via **Resend**. It is a request only — nothing is confirmed automatically (no SMS, calendar, CRM, or auth).
+The estimate wizard's final step POSTs the collected details to a small **Cloudflare Worker**, which validates them, stores a **booking request** in **Supabase**, and sends notification emails via **Zoho SMTP**. It is a request only — nothing is confirmed automatically (no SMS, calendar, CRM, or auth).
 
 ```
-static GitHub Pages site  ->  Cloudflare Worker (POST /v1/bookings)  ->  Supabase (service-role insert)  ->  Resend emails
+static GitHub Pages site  ->  Cloudflare Worker (POST /v1/bookings)  ->  Supabase (service-role insert)  ->  SMTP emails
 ```
 
 - **Endpoint:** `POST https://api.swanson-worx.staging.maximisedai.com/v1/bookings`
@@ -58,11 +57,14 @@ static GitHub Pages site  ->  Cloudflare Worker (POST /v1/bookings)  ->  Supabas
 
 | Variable | Purpose |
 |---|---|
+| `MGRNZ_SMTP_HOST` | Zoho SMTP host, for example `smtp.zoho.com` |
+| `MGRNZ_SMTP_PORT` | Zoho SMTP port, for example `465` or `587` |
+| `MGRNZ_SMTP_USERNAME` | Zoho SMTP username / mailbox |
+| `MGRNZ_SMTP_PASSWORD` | Zoho SMTP password or app password |
 | `SUPABASE_URL` | Supabase project URL (`https://<ref>.supabase.co`) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service-role key — **Worker only**, never in the browser |
 | `BOOKING_NOTIFICATION_EMAIL` | Internal recipient for new-request notifications |
-| `EMAIL_FROM` | Verified Resend sender, e.g. `Swanson Worx <bookings@swanson-worx.staging.maximisedai.com>` |
-| `RESEND_API_KEY` | Resend API key |
+| `EMAIL_FROM` | Verified sender identity, e.g. `Swanson Worx <bookings@swanson-worx.staging.maximisedai.com>` |
 | `ALLOWED_ORIGINS` | Comma-separated CORS allowlist (site origin + local dev) |
 
 **Staging routing:** set `BOOKING_NOTIFICATION_EMAIL` to Mike / a test inbox first. Point it at the client only after approval. No secrets are committed to the repo.
@@ -79,11 +81,14 @@ cp .dev.vars.example .dev.vars   # then fill in real values (gitignored)
 npm run dev                       # wrangler dev on http://localhost:8787
 
 # 3. Set production secrets (once per environment)
+npx wrangler secret put MGRNZ_SMTP_HOST
+npx wrangler secret put MGRNZ_SMTP_PORT
+npx wrangler secret put MGRNZ_SMTP_USERNAME
+npx wrangler secret put MGRNZ_SMTP_PASSWORD
 npx wrangler secret put SUPABASE_URL
 npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
 npx wrangler secret put BOOKING_NOTIFICATION_EMAIL
 npx wrangler secret put EMAIL_FROM
-npx wrangler secret put RESEND_API_KEY
 npx wrangler secret put ALLOWED_ORIGINS
 
 # 4. Deploy the Worker (provisions the custom domain + TLS when the zone is on Cloudflare)
