@@ -10,11 +10,17 @@
 export interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
+
   BOOKING_NOTIFICATION_EMAIL: string;
-  EMAIL_FROM: string;
-  RESEND_API_KEY: string;
-  ALLOWED_ORIGINS: string; // comma-separated list of allowed browser origins
-  BOOKINGS_KV?: KVNamespace; // OPTIONAL: enables idempotency + per-IP rate limiting when bound
+
+  MGRNZ_SMTP_HOST: string;
+  MGRNZ_SMTP_PORT: string;
+  MGRNZ_SMTP_USERNAME: string;
+  MGRNZ_SMTP_PASSWORD: string;
+
+  ALLOWED_ORIGINS: string;
+
+  BOOKINGS_KV?: KVNamespace;
 }
 
 const MAX_BODY_BYTES = 16 * 1024; // 16 KB payload cap
@@ -146,15 +152,44 @@ function normalise(raw: any): { data?: BookingInput; error?: string } {
 
 /* ------------------------------ email ------------------------------ */
 
-async function sendEmail(env: Env, to: string, subject: string, html: string): Promise<void> {
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.RESEND_API_KEY}` },
-    body: JSON.stringify({ from: env.EMAIL_FROM, to: [to], subject, html }),
-  });
-  if (!res.ok) throw new Error(`Resend ${res.status}: ${(await res.text()).slice(0, 200)}`);
-}
+async function sendEmail(
+  env: Env,
+  to: string,
+  subject: string,
+  html: string
+): Promise<void> {
+  const smtp = getSmtpConfig(env);
 
+  const message = buildSmtpMessage({
+    to,
+    subject,
+    html,
+    fromEmail: smtp.username,
+  });
+
+  await sendSmtpEmail(
+    smtp,
+    message,
+    to
+  );
+}
+function getSmtpConfig(env: Env) {
+  const host = env.MGRNZ_SMTP_HOST;
+  const port = Number(env.MGRNZ_SMTP_PORT || "465");
+  const username = env.MGRNZ_SMTP_USERNAME;
+  const password = env.MGRNZ_SMTP_PASSWORD;
+
+  if (!host || !port || !username || !password) {
+    throw new Error("MGRNZ SMTP configuration is invalid.");
+  }
+
+  return {
+    host,
+    port,
+    username,
+    password,
+  };
+}
 async function sendEmails(env: Env, reference: string, data: BookingInput): Promise<void> {
   const vehicle = [data.vehicle_year, data.vehicle_make, data.vehicle_model].filter(Boolean).join(' ');
   const reg = data.vehicle_registration ? ` (${esc(data.vehicle_registration)})` : '';

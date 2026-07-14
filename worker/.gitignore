@@ -3,3 +3,5 @@ node_modules/
 dist/
 # Local secrets for `wrangler dev` — never commit real values.
 .dev.vars
+
+.env
