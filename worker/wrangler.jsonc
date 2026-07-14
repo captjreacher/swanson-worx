@@ -14,8 +14,9 @@
   ]
 
   // Required secrets (set via `wrangler secret put <NAME>`):
+  //   MGRNZ_SMTP_HOST, MGRNZ_SMTP_PORT, MGRNZ_SMTP_USERNAME, MGRNZ_SMTP_PASSWORD,
   //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, BOOKING_NOTIFICATION_EMAIL,
-  //   EMAIL_FROM, RESEND_API_KEY, ALLOWED_ORIGINS
+  //   EMAIL_FROM, ALLOWED_ORIGINS
   //
   // OPTIONAL — idempotency + per-IP rate limiting. Create a KV namespace
   // (`wrangler kv namespace create BOOKINGS_KV`) and uncomment:
